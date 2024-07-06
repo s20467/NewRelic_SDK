@@ -7,6 +7,7 @@ import com.newrelic.telemetry.TelemetryClient;
 import com.newrelic.telemetry.metrics.Count;
 import com.newrelic.telemetry.metrics.MetricBatch;
 import com.newrelic.telemetry.metrics.MetricBatchSender;
+import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Service;
 
 import java.net.MalformedURLException;
@@ -27,10 +28,9 @@ public class MetricService {
 
     public void recordCustom(int value) {
         Attributes attributes = new Attributes();
-        attributes.put("service.name", "New Relic_SDK");
+        attributes.put("service.name", "NewRelic_SDK");
         Count count = new Count("Test_count", value, System.currentTimeMillis() - 10, System.currentTimeMillis(), new Attributes());
         this.telemetryClient.sendBatch(new MetricBatch(List.of(count), attributes));
-        telemetryClient.shutdown();
     }
 
     private static TelemetryClient creteClient(String apiKey)
@@ -44,5 +44,10 @@ public class MetricService {
                         .build();
         MetricBatchSender sender = MetricBatchSender.create(config);
         return new TelemetryClient(sender, null, null, null);
+    }
+
+    @PreDestroy
+    public void close() {
+        this.telemetryClient.shutdown();
     }
 }
